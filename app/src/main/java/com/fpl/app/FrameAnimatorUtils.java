@@ -110,25 +110,27 @@ public class FrameAnimatorUtils {
             currentIndex = 1;
         }
 
+        // 检查是否已经缓存 缓存直接获取
         if (cacheMap.get(currentIndex) != null && cacheMap.get(currentIndex).get() != null) {
             Bitmap bitmap = cacheMap.get(currentIndex).get();
             setIntoView(bitmap);
-            return;
+
+        } else {
+            int currentRow = currentIndex % builder.w_frames == 0 ? currentIndex / builder.w_frames : currentIndex / builder.w_frames + 1;
+            int rowIndex = currentIndex - (currentRow - 1) * builder.w_frames;
+            int left = (rowIndex - 1) * bitmapSize[0] / builder.w_frames;
+            int top = (currentRow - 1) * bitmapSize[1] / builder.h_frames;
+            int right = left + bitmapSize[0] / builder.w_frames;
+            int bottom = top + bitmapSize[1] / builder.h_frames;
+
+            mRect.set(left, top, right, bottom);
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            Bitmap bm = mDecoder.decodeRegion(mRect, opts);
+            cacheMap.put(currentIndex, new WeakReference(bm));//缓存截取后的图片
+            setIntoView(bm);
         }
-
-        int currentRow = currentIndex % builder.w_frames == 0 ? currentIndex / builder.w_frames : currentIndex / builder.w_frames + 1;
-        int rowIndex = currentIndex - (currentRow - 1) * builder.w_frames;
-        int left = (rowIndex - 1) * bitmapSize[0] / builder.w_frames;
-        int top = (currentRow - 1) * bitmapSize[1] / builder.h_frames;
-        int right = left + bitmapSize[0] / builder.w_frames;
-        int bottom = top + bitmapSize[1] / builder.h_frames;
-
-        mRect.set(left, top, right, bottom);
-        BitmapFactory.Options opts = new BitmapFactory.Options();
-        Bitmap bm = mDecoder.decodeRegion(mRect, opts);
-        cacheMap.put(currentIndex, new WeakReference(bm));
-        setIntoView(bm);
     }
+
 
     private void setIntoView(Bitmap bitmap) {
         if (builder.view instanceof ImageView) {
